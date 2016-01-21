@@ -17,11 +17,12 @@ var assert = require('assert'),
      .get('/', function(req, res) {
          res.send('It works!');
      })
-    .get('/api/heroku', function(req, res) {
+    .get('/info/heroku', function(req, res) {
         res.json({
             params: req.params,
             query: req.query,
-            headers: req.headers
+            headers: req.headers,
+            config: config
         });
     })
      .use(function(req, res) {
