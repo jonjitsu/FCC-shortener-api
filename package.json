@@ -17,6 +17,7 @@
   "license": "GPL-2.0",
   "dependencies": {
     "accepts": "^1.3.0",
+    "configuror": "^0.1.2",
     "express": "^4.13.3",
     "express-useragent": "^0.2.4"
   },
