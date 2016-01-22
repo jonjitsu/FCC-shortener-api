@@ -37,13 +37,42 @@ var assert = require('assert'),
         next();
     },
 
+    checkUrl = function(url) {
+        var request = require('request');
+
+        return new Promise(function(resolve, reject) {
+            request(url, function(err, res, body) {
+                if(err) reject(err);
+                // if(res.statusCode[0]==='4' || res.statusCode[0]==='5') reject(err);
+                resolve(url);
+            });
+        });
+    },
+
     app = express()
     .use(jsonBeautifier)
     .use(easyRenderer)
      .get('/', function(req, res) {
          res.render('index');
-         // res.send('<h1>ya</h1>')
      })
+//{ original_url:'', short_url:''}
+    .get(/^\/new\/(.*)/, function(req, res) {
+        var url = req.params[0];
+
+        if( req.query.allow ) {
+            res.json({good:true})
+        } else {
+            checkUrl(url)
+                .then(function good(url) {
+                    res.json({url:url});
+                }, function bad(err) {
+                    res.json({error:err})
+                });
+        }
+        // res.json(req.params);
+        // checkUrl(req.params)
+    })
+
     .get('/info/heroku', function(req, res) {
         withDb(function(db) {
             db.collection('urls').find().toArray(function(err, data) {
