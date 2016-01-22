@@ -6,7 +6,7 @@ var assert = require('assert'),
     express = require('express'),
     useragent = require('express-useragent'),
     accepts = require('accepts'),
-
+    fs = require('fs'),
 
     withDb = function(fn) {
         var MongoClient = require('mongodb').MongoClient;
@@ -20,6 +20,17 @@ var assert = require('assert'),
         });
     },
 
+
+    // middlewares
+    render = function(tmp) {
+        return fs.readFileSync('view/' + tmp + '.html').toString();
+    },
+    easyRenderer = function(req, res, next) {
+        res.render = function(tpl) {
+            res.send(render(tpl));
+        };
+        next();
+    },
     jsonBeautifier = function(req, res, next) {
         console.log(req.query.pretty);
         if(req.query.pretty!==undefined) req.app.set('json spaces', 4);
@@ -28,8 +39,10 @@ var assert = require('assert'),
 
     app = express()
     .use(jsonBeautifier)
+    .use(easyRenderer)
      .get('/', function(req, res) {
-         res.send('It works!');
+         res.render('index');
+         // res.send('<h1>ya</h1>')
      })
     .get('/info/heroku', function(req, res) {
         withDb(function(db) {
