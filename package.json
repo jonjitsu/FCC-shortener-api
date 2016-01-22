@@ -16,7 +16,7 @@
   "author": "Jonathan Willis",
   "license": "GPL-2.0",
   "dependencies": {
-    "bijective-shortener": "^0.2.2",
+    "bijective-shortener": "git+ssh://git@github.com/jonjitsu/node-bijective-shortener.git",
     "configuror": "^0.1.2",
     "express": "^4.13.3",
     "mongoose": "^4.3.6",
