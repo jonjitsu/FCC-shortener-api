@@ -5,33 +5,8 @@ var assert = require('assert'),
     config = require('configuror')(),
     express = require('express'),
     mongoose = require('mongoose'),
-
-// withDb = function(fn) {
-//     var MongoClient = require('mongodb').MongoClient;
-
-//     MongoClient.connect(config.db.uri, function(err, db) {
-//         assert.equal(null, err);
-//         console.log('Connected to Mongo server');
-
-//         fn(db);
-//     });
-// },
-
-// middlewares
-render = function (tmp) {
-    return fs.readFileSync('view/' + tmp + '.html').toString();
-},
-    easyRenderer = function (req, res, next) {
-    res.render = function (tpl) {
-        res.send(render(tpl));
-    };
-    next();
-},
-    jsonBeautifier = function (req, res, next) {
-    console.log(req.query.pretty);
-    if (req.query.pretty !== undefined) req.app.set('json spaces', 4);
-    next();
-},
+    db = mongoose.connect(config.db.uri),
+    UrlModel = require('./url-model')(mongoose),
     checkUrl = function (url, fn) {
     var request = require('request');
 
@@ -48,13 +23,30 @@ render = function (tmp) {
 
     return base + '/' + encoder.makeFromInteger(id);
 },
-    app = express().use(jsonBeautifier).use(easyRenderer).get('/', function (req, res) {
+    redirectTo = function (res, url) {
+    res.writeHead(302, {
+        'Location': url
+    });
+    res.end();
+},
+    app = express().use(require('./json-beautifier')).use(require('./easy-renderer')).get('/', function (req, res) {
     res.render('index');
-})
-//{ original_url:'', short_url:''}
-.get(/^\/new\/(.*)/, function (req, res) {
+}).get('/:id', function (req, res) {
+    var decoder = require('bijective-shortener'),
+        id = decoder.decodeToInteger(req.params.id);
+
+    UrlModel.findOne({ _id: id }, function (err, doc) {
+        if (err) {
+            console.log(err);
+            res.json(err);
+            db.connection.close();
+            return;
+        }
+        if (doc) redirectTo(res, doc.url);else res.json({ error: "No short url found for given input" });
+    });
+    // res.json(req.params);
+}).get(/^\/new\/(.*)/, function (req, res) {
     var url = req.params[0],
-        db = mongoose.connect(config.db.uri),
         handleError = function (fn) {
         return function (err) {
             if (err) {
@@ -70,8 +62,7 @@ render = function (tmp) {
         };
     },
         shortenUrl = function (url) {
-        var UrlModel = require('./url-model')(mongoose),
-            doResponse = function (id) {
+        var doResponse = function (id) {
             res.json({
                 original_url: url,
                 short_url: urlFromId(req, id)
