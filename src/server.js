@@ -47,9 +47,12 @@ var assert = require('assert'),
         });
     },
 
-    urlFromId = function(base, id) {
-        console.log(id, typeof id);
-        var encoder = require('bijective-shortener');
+    urlFromId = function(req, id) {
+        var encoder = require('bijective-shortener'),
+            proto = req.headers['x-forwarded-proto'] || 'http',
+            host = req.headers['host'],
+            base = proto + '://' + host;
+
         return base + '/' + encoder.makeFromInteger(id);
     },
 
@@ -82,7 +85,7 @@ var assert = require('assert'),
                     doResponse = function(id) {
                         res.json({
                             original_url: url,
-                            short_url: urlFromId(id)
+                            short_url: urlFromId(req, id)
                         });
                         db.connection.close();
                     };

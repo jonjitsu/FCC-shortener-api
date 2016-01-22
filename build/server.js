@@ -40,9 +40,12 @@ render = function (tmp) {
         // if(res.statusCode[0]==='4' || res.statusCode[0]==='5') reject(err);
     });
 },
-    urlFromId = function (base, id) {
-    console.log(id, typeof id);
-    var encoder = require('bijective-shortener');
+    urlFromId = function (req, id) {
+    var encoder = require('bijective-shortener'),
+        proto = req.headers['x-forwarded-proto'] || 'http',
+        host = req.headers['host'],
+        base = proto + '://' + host;
+
     return base + '/' + encoder.makeFromInteger(id);
 },
     app = express().use(jsonBeautifier).use(easyRenderer).get('/', function (req, res) {
@@ -71,7 +74,7 @@ render = function (tmp) {
             doResponse = function (id) {
             res.json({
                 original_url: url,
-                short_url: urlFromId(id)
+                short_url: urlFromId(req, id)
             });
             db.connection.close();
         };
