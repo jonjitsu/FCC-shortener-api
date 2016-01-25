@@ -9,11 +9,17 @@ var assert = require('chai').assert,
 ;
 
 describe('app', function() {
-    var server,
+    var server, db,
         port = 3017,
         testAddress = 'http://localhost:' + port.toString(),
         address = function(path) {
             return testAddress + path;
+        },
+        dropUrls = function(done) {
+            db.collection('urls').drop(function(err) {
+                if(err && err.errmsg!=='ns not found') console.log('[EST]: error cleaning up.', err);
+                done();
+            });
         };
 
     beforeEach(function() {
@@ -21,14 +27,17 @@ describe('app', function() {
     });
     afterEach(function() {
         server.close();
-        mongodb.MongoClient.connect(config.db.uri, function(err, db) {
-            if(!err) {
-                db.collection('urls').drop(function(err) {
-                    if(err) console.log('[TEST]: error cleaning up.')
-                    db.close();
-                });
-            }
+    });
+
+    before(function(done) {
+        mongodb.MongoClient.connect(config.db.uri, function(err, dbInstance) {
+            if(err) throw err;
+            db = dbInstance;
+            done();
         });
+    });
+    after(function() {
+
     });
 
 
@@ -54,7 +63,7 @@ describe('app', function() {
                     .end(function(err, res) {
                         is(res.status, 302);
                         is(res.header.location, expected);
-                        done();
+                        dropUrls(done)
                     });
         });
     });
@@ -66,5 +75,17 @@ describe('app', function() {
             de(res.body.error, 'URL invalid');
             done();
         });
+    });
+
+
+    it('allows invalid urls when forced: /new/invalid?allow=true', function(done) {
+        superagent.get(address('/new/invalid'))
+                       .query({ allow: true})
+                       .end(function(err, res) {
+                           assert.ifError(err);
+                           is(res.status, 200);
+                           is(res.body.original_url, 'invalid');
+                           done();
+                       });
     });
 });
