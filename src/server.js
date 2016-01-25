@@ -37,8 +37,8 @@ var assert = require('assert'),
     },
 
     app = express()
-    .use(require('./json-beautifier'))
-    .use(require('./easy-renderer'))
+    .use(require('./middlewares/json-beautifier'))
+    .use(require('./middlewares/easy-renderer'))
     .get('/', function(req, res) {
         res.render('index');
     })
