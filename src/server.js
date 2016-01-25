@@ -51,7 +51,6 @@ var assert = require('assert'),
             if(err) {
                 console.log(err);
                 res.json(err);
-                db.connection.close();
                 return;
             }
             if(doc) redirectTo(res, doc.url);
@@ -68,7 +67,6 @@ var assert = require('assert'),
                         res.json(err);
                         // res.sendStatus(500);
                         console.log(err);
-                        db.connection.close();
                     } else {
                         var args = [].slice.apply(arguments);
                         args.shift();
@@ -82,7 +80,6 @@ var assert = require('assert'),
                             original_url: url,
                             short_url: urlFromId(req, id)
                         });
-                        db.connection.close();
                     };
 
                 UrlModel.findOne({url:url}, handleError(function(doc) {
